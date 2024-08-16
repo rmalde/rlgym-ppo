@@ -40,7 +40,7 @@ class DiscreteFF(nn.Module):
             if t != np.array:
                 obs = np.asarray(obs)
             obs = torch.as_tensor(obs, dtype=torch.float32, device=self.device)
-        logits = self.model(None, obs)
+        logits = self.model(obs)
         return F.softmax(logits, dim=-1)
 
     def get_action(self, obs, deterministic=False):
