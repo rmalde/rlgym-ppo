@@ -6,9 +6,9 @@ Description:
     An implementation of a feed-forward neural network which parametrizes a discrete distribution over a space of actions.
 """
 
-
 from torch.distributions import Categorical
 import torch.nn as nn
+import torch.nn.functional as F
 import torch
 import numpy as np
 
@@ -18,7 +18,9 @@ class DiscreteFF(nn.Module):
         super().__init__()
         self.device = device
 
-        assert len(layer_sizes) != 0, "AT LEAST ONE LAYER MUST BE SPECIFIED TO BUILD THE NEURAL NETWORK!"
+        assert (
+            len(layer_sizes) != 0
+        ), "AT LEAST ONE LAYER MUST BE SPECIFIED TO BUILD THE NEURAL NETWORK!"
         layers = [nn.Linear(input_shape, layer_sizes[0]), nn.ReLU()]
         prev_size = layer_sizes[0]
         for size in layer_sizes[1:]:
@@ -27,7 +29,7 @@ class DiscreteFF(nn.Module):
             prev_size = size
 
         layers.append(nn.Linear(layer_sizes[-1], n_actions))
-        layers.append(nn.Softmax(dim=-1))
+        # layers.append(nn.Softmax(dim=-1))
         self.model = nn.Sequential(*layers).to(self.device)
 
         self.n_actions = n_actions
@@ -38,8 +40,8 @@ class DiscreteFF(nn.Module):
             if t != np.array:
                 obs = np.asarray(obs)
             obs = torch.as_tensor(obs, dtype=torch.float32, device=self.device)
-
-        return self.model(obs)
+        logits = self.model(None, obs)
+        return F.softmax(logits, dim=-1)
 
     def get_action(self, obs, deterministic=False):
         """

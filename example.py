@@ -43,10 +43,11 @@ def build_rocketsim_env():
     )
     from rlgym_sim.utils import common_values
     from rlgym_sim.utils.action_parsers import ContinuousAction
-    from rlgym_sim.utils.state_setters import RandomState, DefaultState
+    # from rlgym_sim.utils.state_setters import RandomState, DefaultState
 
     from rlgym_ppo.factories.obs_builders import PyrObs
     from rlgym_ppo.factories.action_parsers import LookupAction
+    from rlgym_ppo.factories.state_setters import SemiRandomState
 
     spawn_opponents = True
     team_size = 1
@@ -74,7 +75,7 @@ def build_rocketsim_env():
     )
 
     obs_builder = PyrObs()
-    state_setter = RandomState()
+    state_setter = SemiRandomState(p_random=0.5)
 
     env = rlgym_sim.make(
         tick_skip=tick_skip,

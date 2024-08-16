@@ -4,7 +4,7 @@ import time
 import numpy as np
 import torch
 
-from rlgym_ppo.ppo import ContinuousPolicy, DiscreteFF, MultiDiscreteFF, ValueEstimator, LookupPolicy
+from rlgym_ppo.ppo import ContinuousPolicy, DiscreteFF, MultiDiscreteFF, ValueEstimator
 
 
 class PPOLearner(object):
@@ -31,10 +31,7 @@ class PPOLearner(object):
             batch_size % mini_batch_size == 0
         ), "MINIBATCH SIZE MUST BE AN INTEGER MULTIPLE OF BATCH SIZE"
 
-        if policy_type == 3:
-            self.policy = LookupPolicy(
-                obs_space_size, act_space_size, policy_layer_sizes, device
-            ).to(device)
+
         if policy_type == 2:
             self.policy = ContinuousPolicy(
                 obs_space_size,

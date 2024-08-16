@@ -1,1 +1,1 @@
-from .semi_random_state_setter import SemiRandomStateSetter
+from .semi_random_state import SemiRandomState
