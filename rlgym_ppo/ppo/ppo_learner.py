@@ -4,7 +4,7 @@ import time
 import numpy as np
 import torch
 
-from rlgym_ppo.ppo import ContinuousPolicy, DiscreteFF, MultiDiscreteFF, ValueEstimator
+from rlgym_ppo.ppo import ContinuousPolicy, DiscreteFF, MultiDiscreteFF, ValueEstimator, LookupPolicy
 
 
 class PPOLearner(object):
@@ -31,6 +31,10 @@ class PPOLearner(object):
             batch_size % mini_batch_size == 0
         ), "MINIBATCH SIZE MUST BE AN INTEGER MULTIPLE OF BATCH SIZE"
 
+        if policy_type == 3:
+            self.policy = LookupPolicy(
+                obs_space_size, act_space_size, policy_layer_sizes, device
+            ).to(device)
         if policy_type == 2:
             self.policy = ContinuousPolicy(
                 obs_space_size,
@@ -79,7 +83,7 @@ class PPOLearner(object):
         print(f"{'Critic':<10} {critic_params_count:<10}")
         print("-" * 20)
         print(f"{'Total':<10} {total_parameters:<10}")
-        
+
         print(f"Current Policy Learning Rate: {policy_lr}")
         print(f"Current Critic Learning Rate: {critic_lr}")
 
@@ -173,13 +177,17 @@ class PPOLearner(object):
                         ratio * advantages, clipped * advantages
                     ).mean()
                     minibatch_ratio = self.mini_batch_size / self.batch_size
-                    value_loss = self.value_loss_fn(vals, target_values) * minibatch_ratio
+                    value_loss = (
+                        self.value_loss_fn(vals, target_values) * minibatch_ratio
+                    )
                     ppo_loss = (policy_loss - entropy * self.ent_coef) * minibatch_ratio
 
                     ppo_loss.backward()
                     value_loss.backward()
 
-                    mean_val_loss += (value_loss / minibatch_ratio).cpu().detach().item()
+                    mean_val_loss += (
+                        (value_loss / minibatch_ratio).cpu().detach().item()
+                    )
                     mean_divergence += kl
                     mean_entropy += entropy.cpu().detach().item()
                     n_minibatch_iterations += 1
