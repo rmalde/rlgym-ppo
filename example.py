@@ -3,6 +3,9 @@ from rlgym_sim.utils.gamestates import GameState
 from rlgym_ppo.util import MetricsLogger
 
 
+OBS_SIZE = 111
+ACTION_SIZE = 90
+
 class ExampleLogger(MetricsLogger):
     def _collect_metrics(self, game_state: GameState) -> list:
         return [
@@ -40,26 +43,29 @@ def build_rocketsim_env():
     from rlgym_sim.utils.terminal_conditions.common_conditions import (
         NoTouchTimeoutCondition,
         GoalScoredCondition,
+        TimeoutCondition,
     )
     from rlgym_sim.utils import common_values
-    from rlgym_sim.utils.action_parsers import ContinuousAction
+    # from rlgym_sim.utils.action_parsers import ContinuousAction
     # from rlgym_sim.utils.state_setters import RandomState, DefaultState
 
     from rlgym_ppo.factories.obs_builders import PyrObs
     from rlgym_ppo.factories.action_parsers import LookupAction
     from rlgym_ppo.factories.state_setters import SemiRandomState
+    from rlgym_ppo.factories.reward_functions import SkillReward
 
     spawn_opponents = True
     team_size = 1
     game_tick_rate = 120
     tick_skip = 4
-    timeout_seconds = 10
+    timeout_seconds = 15
     timeout_ticks = int(round(timeout_seconds * game_tick_rate / tick_skip))
+    # timeout_ticks = 450
 
     # action_parser = ContinuousAction()
     action_parser = LookupAction()
     terminal_conditions = [
-        NoTouchTimeoutCondition(timeout_ticks),
+        TimeoutCondition(timeout_ticks),
         GoalScoredCondition(),
     ]
 
@@ -72,6 +78,19 @@ def build_rocketsim_env():
 
     reward_fn = CombinedReward(
         reward_functions=rewards_to_combine, reward_weights=reward_weights
+    )
+    reward_model_config = {
+        'layer_sizes': [1024, 1024, 1024, 1024],
+        'use_batch_norm': True,
+        "dropout": 0.2
+    }
+    reward_fn = SkillReward(
+        obs_size=OBS_SIZE,
+        action_size=ACTION_SIZE,
+        layer_sizes=[1024, 1024, 1024, 1024],
+        model_config=reward_model_config,
+        max_steps=timeout_ticks,
+        device='cpu',
     )
 
     obs_builder = PyrObs()
@@ -120,6 +139,7 @@ if __name__ == "__main__":
         save_every_ts=1_000_000,
         timestep_limit=int(1e69),
         log_to_wandb=True,
+        wandb_project_name="skill-ppo",
         checkpoint_load_folder=None,
     )
     learner.learn()
