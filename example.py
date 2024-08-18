@@ -9,21 +9,26 @@ ACTION_SIZE = 90
 class ExampleLogger(MetricsLogger):
     def _collect_metrics(self, game_state: GameState) -> list:
         return [
-            game_state.players[0].car_data.linear_velocity,
-            game_state.players[0].car_data.rotation_mtx(),
+            np.linalg.norm(game_state.players[0].car_data.linear_velocity),
+            np.linalg.norm(game_state.ball.linear_velocity),
             game_state.orange_score,
         ]
 
     def _report_metrics(self, collected_metrics, wandb_run, cumulative_timesteps):
-        avg_linvel = np.zeros(3)
+        avg_vel = 0
+        avg_ball_vel = 0
+        avg_orange_score = 0
         for metric_array in collected_metrics:
-            p0_linear_velocity = metric_array[0]
-            avg_linvel += p0_linear_velocity
-        avg_linvel /= len(collected_metrics)
+            avg_vel += metric_array[0]
+            avg_ball_vel += metric_array[1]
+            avg_orange_score += metric_array[2]
+        avg_vel /= len(collected_metrics)
+        avg_ball_vel /= len(collected_metrics)
+        avg_orange_score /= len(collected_metrics)
         report = {
-            "x_vel": avg_linvel[0],
-            "y_vel": avg_linvel[1],
-            "z_vel": avg_linvel[2],
+            "avg_vel": avg_vel,
+            "avg_ball_vel": avg_ball_vel,
+            "avg_orange_score": avg_orange_score,
             "Cumulative Timesteps": cumulative_timesteps,
         }
         wandb_run.log(report)
