@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 from collections import defaultdict
 import numpy as np
 
@@ -6,21 +7,22 @@ from rlgym_sim.utils import RewardFunction
 from rlgym_sim.utils.reward_functions.common_rewards import EventReward
 from rlgym_sim.utils.gamestates import GameState, PlayerData
 
-from rlgym_ppo.models import FFN
+from rlgym_ppo.models import FFN, SkillMask
 from rlgym_ppo.factories.obs_builders.pyr_obs import PyrObs
 
-MODEL_PATH = "rlgym_ppo/factories/reward_functions/skill_reward.pt"
+MODEL_PATH = "rlgym_ppo/factories/reward_functions/low_skill_reward.pt"
 
 class SkillReward(RewardFunction):
     def __init__(self, obs_size, action_size, layer_sizes, model_config, max_steps, device):
         super().__init__()
-        self.skill_model = FFN(
-            obs_size,
+        skill_mask = SkillMask()
+        self.skill_model = nn.Sequential(skill_mask, FFN(
+            skill_mask.out_dim,
             action_size,
             layer_sizes,
             objective="regression",
             config=model_config,
-        ).to(device).eval()
+        )).to(device).eval()
         self.skill_model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
         self.obs_builder = PyrObs()
 

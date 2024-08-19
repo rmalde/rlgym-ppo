@@ -261,16 +261,15 @@ class PPOLearner(object):
         assert os.path.exists(folder_path), "PPO LEARNER CANNOT FIND FOLDER {}".format(
             folder_path
         )
+        policy_path = os.path.join(folder_path, "PPO_POLICY.pt")
+        value_net_path = os.path.join(folder_path, "PPO_VALUE_NET.pt")
+        policy_optimizer_path = os.path.join(folder_path, "PPO_POLICY_OPTIMIZER.pt")
+        value_optimizer_path = os.path.join(folder_path, "PPO_VALUE_NET_OPTIMIZER.pt")
 
-        self.policy.load_state_dict(
-            torch.load(os.path.join(folder_path, "PPO_POLICY.pt"))
-        )
-        self.value_net.load_state_dict(
-            torch.load(os.path.join(folder_path, "PPO_VALUE_NET.pt"))
-        )
-        self.policy_optimizer.load_state_dict(
-            torch.load(os.path.join(folder_path, "PPO_POLICY_OPTIMIZER.pt"))
-        )
-        self.value_optimizer.load_state_dict(
-            torch.load(os.path.join(folder_path, "PPO_VALUE_NET_OPTIMIZER.pt"))
-        )
+        self.policy.load_state_dict(torch.load(policy_path))
+        if os.path.exists(value_net_path):
+            self.value_net.load_state_dict(torch.load(value_net_path))
+        if os.path.exists(policy_optimizer_path):
+            self.policy_optimizer.load_state_dict(torch.load(policy_optimizer_path))
+        if os.path.exists(value_optimizer_path):
+            self.value_optimizer.load_state_dict(torch.load(value_optimizer_path))

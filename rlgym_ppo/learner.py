@@ -14,6 +14,7 @@ import random
 import shutil
 import time
 from typing import Union, Tuple
+from torch.optim.lr_scheduler import LinearLR
 
 import numpy as np
 import torch
@@ -58,6 +59,7 @@ class Learner(object):
             gae_gamma: float = 0.99,
             policy_lr: float = 3e-4,
             critic_lr: float = 3e-4,
+            policy_warmup_steps: int = 2_000_000,
 
             log_to_wandb: bool = False,
             load_wandb: bool = True,
@@ -200,6 +202,14 @@ class Learner(object):
                 project=project, group=group, config=self.config, name=run_name, reinit=True
             )
             print("Created new wandb run!", self.wandb_run.id)
+
+        if wandb_loaded:
+            print("Using warmup scheduler for policy learning rate...")
+        self.policy_lr_scheduler = LinearLR(
+            self.ppo_learner.policy_optimizer,
+            start_factor=0.01 if wandb_loaded else 1.0, # only warmup if we're loading a checkpoint
+            end_factor=1.0, total_iters=policy_warmup_steps / self.ts_per_epoch
+        )
         print("Learner successfully initialized!")
 
     def update_learning_rate(self, new_policy_lr=None, new_critic_lr=None):
@@ -326,6 +336,7 @@ class Learner(object):
                 self.ts_since_last_save = 0
 
             self.epoch += 1
+            self.policy_lr_scheduler.step()
 
     @torch.no_grad()
     def add_new_experience(self, experience):

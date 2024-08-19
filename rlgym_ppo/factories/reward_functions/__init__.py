@@ -1,1 +1,2 @@
 from .skill_reward import SkillReward
+from .custom_rewards import TouchVelChange, BallVelocityReward, PositiveVelocityPlayerToBallReward, PositiveVelocityBallToGoalReward
